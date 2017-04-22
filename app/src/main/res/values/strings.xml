@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">Money Record</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="nav_all">All</string>
+    <string name="nav_income">Income</string>
+    <string name="nav_spent">Spent</string>
+
+    <string name="action_ok">OK</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="homepage_date_default">Select date</string>
+    <string name="homepage_all_dates">All dates</string>
+
+    <string name="item_edit">Edit</string>
+    <string name="item_delete">Delete</string>
+
+
+    <!-- Add Item -->
+    <string name="dialog_add_item_title">Add Item</string>
+
+    <string-array name="category_spinner_income">
+        <item>Salary</item>
+        <item>Other</item>
+    </string-array>
+
+    <string-array name="category_spinner_spend">
+        <item>Food</item>
+        <item>Clothing</item>
+        <item>Entertainment</item>
+        <item>Medical</item>
+        <item>Other</item>
+    </string-array>
+
+    <string name="additem_radio_text_income">Income</string>
+    <string name="additem_radio_text_spend">Spend</string>
+    <string name="title_activity_add_item">Add Item</string>
+
+    <!-- &: &amp; -->
+
+    <string name="content_authority">com.wordpress.jlvivit.moneyrecord</string>
+    <string name="title_activity_edit_item">Edit Item</string>
+
+
+</resources>
