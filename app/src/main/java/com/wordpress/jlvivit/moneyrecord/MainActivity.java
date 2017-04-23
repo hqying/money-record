@@ -56,16 +56,16 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        getSupportLoaderManager().initLoader(RECORD_LOADER, null, this);
         super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         state = 2;
         dateSelection = null;
-
+        
+        getSupportLoaderManager().initLoader(RECORD_LOADER, null, this);
+        
+        setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -147,8 +147,6 @@ public class MainActivity extends AppCompatActivity implements
         registerForContextMenu(recordDisplayListview);
         recordAdapter = new RecordAdapter(this, null, 0);
         recordDisplayListview.setAdapter(recordAdapter);
-
-        updateRecordDisplay();
     }
 
     private void updateState(int stateChanged) {
@@ -209,61 +207,6 @@ public class MainActivity extends AppCompatActivity implements
         //TODO
         getSupportLoaderManager().restartLoader(RECORD_LOADER, null, this);
     }
-
-    /*
-     * updateRecordDisplay method for ArrayAdapter<String>
-     */
-//    private void updateRecordDisplay() {
-//        Cursor cursor;
-//        recordAdapter.clear();
-//
-//        Uri uri;
-//        if(dateSelection == null) {
-//            if (state == 2) {
-//                uri = MoneyRecordEntry.CONTENT_URI;
-//            } else {
-//                uri = MoneyRecordEntry.buildMoneyRecordInout(state);
-//            }
-//        } else {
-//            if (state == 2) {
-//                uri = MoneyRecordEntry.buildMoneyRecordDate(dateSelection);
-//            } else {
-//                uri = MoneyRecordEntry.buildMoneyRecordInoutAndDate(state, dateSelection);
-//            }
-//        }
-//
-//        cursor = getContentResolver().query(uri, RECORD_COLUMNS, null, null, "DATE DESC");
-//
-//        double total = 0;
-//
-//        if (cursor == null) {
-//            return;
-//        }
-//        if (cursor.moveToFirst()) {
-//            do {
-//                int _id = cursor.getInt(COL_MONEY_RECORD_ID);
-//                int income = cursor.getInt(COL_MONEY_RECORD_INOUT);
-//                String inoutStr = income == 1 ? "Income:" : "Spent:";
-//                String dateStr = cursor.getString(COL_MONEY_RECORD_DATE);
-//                String category = cursor.getString(COL_MONEY_RECORD_CATEGORY);
-//                double amount = cursor.getDouble(COL_MONEY_RECORD_AMOUNT);
-//                total += income == 1 ? amount : -amount;
-//                String note = cursor.getString(COL_MONEY_RECORD_NOTE);
-//                String additemInfo = Integer.toString(_id) + " " + inoutStr + " " + dateStr + " " +
-//                        category + " " + String.format("%.2f", amount) + " " + note;
-//                Log.v("see id", additemInfo);
-//                recordAdapter.add(additemInfo);
-//            } while (cursor.moveToNext());
-//        }
-//        cursor.close();
-//
-//        totalTextview.setText(String.format("%.2f", total));
-//    }
-
-//    private void deleteRecord() {
-//        getContentResolver().delete(, null, null);
-//        updateRecordDisplay();
-//    }
 
 
     @Override
@@ -327,7 +270,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
