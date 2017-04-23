@@ -10,8 +10,6 @@ import android.widget.TextView;
 
 public class RecordAdapter extends CursorAdapter {
 
-
-
     public RecordAdapter(Context context, Cursor cursor, int flags) {
         super(context, cursor, flags);
     }
@@ -33,9 +31,11 @@ public class RecordAdapter extends CursorAdapter {
         String dateStr = cursor.getString(MainActivity.COL_MONEY_RECORD_DATE);
         String category = cursor.getString(MainActivity.COL_MONEY_RECORD_CATEGORY);
         double amount = cursor.getDouble(MainActivity.COL_MONEY_RECORD_AMOUNT);
+        String note = cursor.getString(MainActivity.COL_MONEY_RECORD_NOTE);
+        String noteStr = note.equals("") ? "" : "(" + note +")";
 
-        String additemInfo = inoutStr + " " + dateStr + " " +
-                        category + " " + String.format("%.2f", amount);
-        recordTextview.setText(additemInfo);
+        String recordItemDisplay = inoutStr + " " + dateStr + " " + category + " " +
+                String.format("%.2f", amount) + " " + noteStr;
+        recordTextview.setText(recordItemDisplay);
     }
 }

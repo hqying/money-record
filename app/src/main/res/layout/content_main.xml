@@ -15,20 +15,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:minHeight="?android:attr/listPreferredItemHeight">
+        android:gravity="center">
 
         <Spinner
             android:id="@+id/year_spinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1.2"/>
 
         <Spinner
             android:id="@+id/month_spinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1.2"/>
 
         <Spinner
             android:id="@+id/day_spinner"
@@ -36,14 +35,52 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"/>
 
+        <Button
+            android:id="@+id/button_clear_filter"
+            android:layout_width="?android:attr/listPreferredItemHeight"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:text="@string/button_clear_filter"/>
+
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Spinner
+            android:id="@+id/filter_inout_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textAlignment="center"
+            android:entries="@array/inout_spinner"/>
+
+        <Spinner
+            android:id="@+id/filter_category_spinner"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textAlignment="center" />
+
+        <Button
+            android:id="@+id/button_filter_set"
+            android:layout_width="52dp"
+            android:layout_height="match_parent"
+            android:textSize="12sp"
+            android:text="@string/button_filter_set"/>
+
+    </LinearLayout>
+
+    <!--TextView
+        android:id="@+id/total_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="20sp" /-->
 
     <ListView
         android:id="@+id/record_display_listview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
-
 
 </LinearLayout>

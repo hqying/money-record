@@ -89,8 +89,7 @@ public class AddItemActivity extends AppCompatActivity {
     }
 
     protected void updateLabel() {
-        String dateFormatStr = "yyyy-MM-dd";
-        SimpleDateFormat sdf = new SimpleDateFormat(dateFormatStr);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         dateView.setText(sdf.format(calendar.getTime()));
     }
 
@@ -104,7 +103,7 @@ public class AddItemActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_ok) {
-            additem();
+            addItem();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -113,32 +112,26 @@ public class AddItemActivity extends AppCompatActivity {
     protected ContentValues createContentValues() {
         ContentValues cv = new ContentValues();
         if (amountView.getText().toString().equals("")) {
-            Toast.makeText(this, "Amount necessary.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.empty_amount_warning), Toast.LENGTH_LONG).show();
             return null;
         }
         int income = inoutRadioGroup.getCheckedRadioButtonId() == R.id.additem_radio_income ? 1 : 0;
-        String inoutStr = income == 1 ? "Income:" : "Spent:";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String dateStr = sdf.format(calendar.getTime());
         String category = (String) categorySpinner.getSelectedItem();
         double amount = Double.parseDouble(amountView.getText().toString());
         String note = noteView.getText().toString();
 
-        String additemInfo = inoutStr + " " + dateStr + " " +
-                category + " " + String.format("%.2f", amount) + " " + note;
-
         cv.put(MoneyRecordEntry.COLUMN_INOUT, income);
         cv.put(MoneyRecordEntry.COLUMN_DATE, dateStr);
         cv.put(MoneyRecordEntry.COLUMN_CATEGORY, category);
         cv.put(MoneyRecordEntry.COLUMN_AMOUNT, amount);
-        cv.put(MoneyRecordEntry.COLUMN_NOTE, note);
-
-        Toast.makeText(this, additemInfo, Toast.LENGTH_LONG).show();
+        cv.put(MoneyRecordEntry.COLUMN_NOTE, note.trim());
 
         return cv;
     }
 
-    private void additem() {
+    private void addItem() {
         ContentValues cv = createContentValues();
         if (cv != null) {
             getContentResolver().insert(MoneyRecordEntry.CONTENT_URI, cv);

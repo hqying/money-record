@@ -5,9 +5,6 @@ import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class MoneyRecordContract {
     public static final String CONTENT_AUTHORITY = "com.wordpress.jlvivit.moneyrecord";
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
@@ -39,24 +36,27 @@ public class MoneyRecordContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static Uri buildMoneyRecordInout(int inout) {
-            return CONTENT_URI.buildUpon().appendPath(Integer.toString(inout)).build();
+        public static Uri buildMoneyRecordInoutAndCategory(String inoutStr, String category) {
+            return CONTENT_URI.buildUpon().appendPath(inoutStr).appendPath(category).build();
         }
 
-        public static Uri buildMoneyRecordDate(Date date) {
-            String dateStr = new SimpleDateFormat("yyyy-MM-dd").format(date);
-            return CONTENT_URI.buildUpon().appendPath(dateStr).build();
+        public static Uri buildMoneyRecordDate(String inoutStr, String category, int year, int month, int day) {
+            Uri baseUri = buildMoneyRecordInoutAndCategory(inoutStr, category);
+            if (year == -1) {
+                return baseUri;
+            }
+            if (month == -1) {
+                return baseUri.buildUpon().appendQueryParameter("year", Integer.toString(year)).build();
+            }
+            if (day == -1) {
+                return baseUri.buildUpon().appendQueryParameter("year", Integer.toString(year))
+                        .appendQueryParameter("month", Integer.toString(month+1)).build();
+            } else {
+                return baseUri.buildUpon().appendQueryParameter("year", Integer.toString(year))
+                        .appendQueryParameter("month", Integer.toString(month+1))
+                        .appendQueryParameter("day", Integer.toString(day)).build();
+            }
         }
-
-        public static Uri buildMoneyRecordInoutAndDate(int inout, Date date) {
-            String dateStr = new SimpleDateFormat("yyyy-MM-dd").format(date);
-            return CONTENT_URI.buildUpon().appendPath(Integer.toString(inout)).appendPath(dateStr).build();
-        }
-
-        public static Uri buildMoneyRecordCategory(int inout, String category) {
-            return CONTENT_URI.buildUpon().appendPath(Integer.toString(inout)).appendPath(category).build();
-        }
-
 
 
         public static String getInoutFromUri(Uri uri) {
@@ -67,12 +67,12 @@ public class MoneyRecordContract {
             return uri.getPathSegments().get(2);
         }
 
-        public static String getDateFromUri(Uri uri) {
-            return uri.getPathSegments().get(1);
-        }
-
-        public static String getDateFromUriWithInout(Uri uri) {
-            return uri.getPathSegments().get(2);
+        public static String[] getDateFromUri(Uri uri) {
+            String[] date = new String[3];
+            date[0] = uri.getQueryParameter("year");
+            date[1] = uri.getQueryParameter("month");
+            date[2] = uri.getQueryParameter("day");
+            return date;
         }
 
     }

@@ -5,13 +5,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
@@ -20,37 +16,39 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.wordpress.jlvivit.moneyrecord.data.MoneyRecordContract.MoneyRecordEntry;
 
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
-        LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemSelectedListener {
+import static java.lang.Integer.parseInt;
+
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>,
+        AdapterView.OnItemSelectedListener, View.OnClickListener {
 
     private RecordAdapter recordAdapter;
     private ListView recordDisplayListview;
-    private TextView totalTextview;
-    private TextView allDatesTextview;
-    private Calendar calendar;
+//    private TextView totalTextview;
+    private static final Calendar calendar = Calendar.getInstance();
     private Spinner yearSpinner;
     private Spinner monthSpinner;
     private Spinner daySpinner;
+    private Spinner inoutSpinner;
+    private Spinner categorySpinner;
 
-    private ArrayAdapter<String> yearAdapter;
     private ArrayAdapter<String> monthAdapter;
     private ArrayAdapter<String> dayAdapter;
+    private ArrayAdapter<String> categoryAdapter;
 
-    private int state;  // income: 1; spent: 0; all: null
-    private Date dateSelection;
+    private int inoutSelection;  // income: 1; spent: 0; all: -1
+    private String categorySelection;
     private int yearSelection;
     private int monthSelection;
     private int daySelection;
+
 
 
     private static final int RECORD_LOADER = 0;
@@ -69,16 +67,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        getSupportLoaderManager().initLoader(RECORD_LOADER, null, this);
         super.onCreate(savedInstanceState);
+
+        inoutSelection = -1;
+        categorySelection = null;
+        yearSelection = monthSelection = daySelection = -1;
+
+        getSupportLoaderManager().initLoader(RECORD_LOADER, null, this);
+
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        state = 2;
-        dateSelection = null;
-        yearSelection = monthSelection = daySelection = -1;
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -117,24 +117,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
 
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        calendar = Calendar.getInstance();
-
         yearSpinner = (Spinner) findViewById(R.id.year_spinner);
         monthSpinner = (Spinner) findViewById(R.id.month_spinner);
         daySpinner = (Spinner) findViewById(R.id.day_spinner);
 
-        yearAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
         String[] yearRange = new String[calendar.get(Calendar.YEAR) - 2016 + 2];
-        yearRange[0] = "Year";
+        yearRange[0] = getString(R.string.filter_spinner_default_year);
         for (int i = 2016, k = 1; i <= calendar.get(Calendar.YEAR); i++, k++) {
             yearRange[k] = Integer.toString(i);
         }
@@ -142,14 +131,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         yearSpinner.setAdapter(yearAdapter);
 
-        monthAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
-        monthAdapter.add("Month");
+        monthAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        monthAdapter.add(getString(R.string.filter_spinner_default_month));
         monthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         monthSpinner.setAdapter(monthAdapter);
 
 
-        dayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
-        dayAdapter.add("Day");
+        dayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        dayAdapter.add(getString(R.string.filter_spinner_default_day));
         dayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         daySpinner.setAdapter(dayAdapter);
 
@@ -157,12 +146,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         monthSpinner.setOnItemSelectedListener(this);
         daySpinner.setOnItemSelectedListener(this);
 
+        inoutSpinner = (Spinner) findViewById(R.id.filter_inout_spinner);
+        categorySpinner = (Spinner) findViewById(R.id.filter_category_spinner);
+        categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        categoryAdapter.add(getString(R.string.filter_spinner_default_category));
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        categorySpinner.setAdapter(categoryAdapter);
+        inoutSpinner.setOnItemSelectedListener(this);
+        categorySpinner.setOnItemSelectedListener(this);
+
+        Button clearFilterButton = (Button) findViewById(R.id.button_clear_filter);
+        Button filterSetButton = (Button) findViewById(R.id.button_filter_set);
+        clearFilterButton.setOnClickListener(this);
+        filterSetButton.setOnClickListener(this);
+
         recordDisplayListview = (ListView) findViewById(R.id.record_display_listview);
         registerForContextMenu(recordDisplayListview);
         recordAdapter = new RecordAdapter(this, null, 0);
         recordDisplayListview.setAdapter(recordAdapter);
-
-        updateRecordDisplay();
     }
 
     @Override
@@ -170,65 +171,81 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String selected = (String) parent.getSelectedItem();
         switch (parent.getId()) {
             case R.id.year_spinner:
-                if (!selected.equals("Year")) {
-                    yearSelection = Integer.parseInt(selected);
+                resetMonthSpinner();
+                resetDaySpinner();
+                if (selected.equals(getString(R.string.filter_spinner_default_year))) {
+                    yearSelection = -1;
+                } else {
+                    yearSelection = parseInt(selected);
                     int maxMonth =  ((int) calendar.get(Calendar.YEAR) == yearSelection) ?
                             calendar.get(Calendar.MONTH) + 1 : 12;
-
-                    String[] monthRange = new String[maxMonth + 1];
-                    monthRange[0] = "Month";
+                    String[] monthRange = new String[maxMonth];
                     for (int i = 1; i <= maxMonth; i++) {
-                        monthRange[i] = Integer.toString(i);
+                        monthRange[i-1] = Integer.toString(i);
                     }
-                    monthAdapter.clear();
-                    dayAdapter.clear();
-                    monthSelection = -1;
-                    daySelection = -1;
                     monthAdapter.addAll(monthRange);
-                    dayAdapter.add("Day");
-                    monthSpinner.setSelection(0);
-                    daySpinner.setSelection(0);
                 }
                 break;
+
             case R.id.month_spinner:
-                if (!selected.equals("Month")) {
-                    monthSelection = Integer.parseInt(selected) - 1;
-                    Integer[] days31 = new Integer[] {1, 3, 5, 7, 8, 10, 12};
-                    Integer[] days30 = new Integer[] {4, 6, 9, 11};
-                    int maxDay;
-                    if (yearSelection == calendar.get(Calendar.YEAR) &&
-                            monthSelection == (int) calendar.get(Calendar.MONTH)) {
-                        maxDay = calendar.get(Calendar.DAY_OF_MONTH);
-                    } else {
-                        if (Arrays.asList(days31).contains(monthSelection + 1)) {
-                            maxDay = 31;
-                        } else if (Arrays.asList(days30).contains(monthSelection + 1)) {
-                            maxDay = 30;
-                        } else if (monthSelection + 1 == 2) {
-                            maxDay = yearSelection % 4 == 0 ? 29 : 28;
-                        } else {
-                            throw new UnsupportedOperationException("Wrong month selection??!!??");
-                        }
-                    }
-                    String[] dayRange = new String[maxDay + 1];
-                    dayRange[0] = "Day";
+                resetDaySpinner();
+                if (selected.equals(getString(R.string.filter_spinner_default_month))) {
+                    monthSelection = -1;
+                } else {
+                    monthSelection = parseInt(selected) - 1;
+                    int maxDay = Utility.getMaxDay(yearSelection, monthSelection);
+                    String[] dayRange = new String[maxDay];
                     for (int i = 1; i <= maxDay; i++) {
-                        dayRange[i] = Integer.toString(i);
+                        dayRange[i-1] = Integer.toString(i);
                     }
-                    dayAdapter.clear();
-                    daySelection = -1;
                     dayAdapter.addAll(dayRange);
-                    daySpinner.setSelection(0);
                 }
                 break;
+
             case R.id.day_spinner:
-                if (!selected.equals("Day")) {
-                    daySelection = Integer.parseInt(selected);
+                daySelection = selected.equals(getString(R.string.filter_spinner_default_day)) ?
+                                -1 : Integer.parseInt(selected);
+                break;
+
+
+            case R.id.filter_inout_spinner:
+                inoutSelection = selected.equals(getString(R.string.filter_spinner_default_inout)) ?
+                                -1 : selected.equals("Income") ? 1 : 0;
+                resetCategorySpinner();
+                if (selected.equals("Income")) {
+                    categoryAdapter.addAll(getResources().getStringArray(R.array.category_spinner_income));
+                } else if (selected.equals("Spent")) {
+                    categoryAdapter.addAll(getResources().getStringArray(R.array.category_spinner_spend));
                 }
                 break;
+
+            case R.id.filter_category_spinner:
+                categorySelection = selected.equals(
+                        getString(R.string.filter_spinner_default_category)) ? null : selected;
             default:
                 // TODO
         }
+    }
+
+    private void resetMonthSpinner() {
+        monthAdapter.clear();
+        monthSelection = -1;
+        monthAdapter.add(getString(R.string.filter_spinner_default_month));
+        monthSpinner.setSelection(0);
+    }
+
+    private void resetDaySpinner() {
+        dayAdapter.clear();
+        daySelection = -1;
+        dayAdapter.add(getString(R.string.filter_spinner_default_day));
+        daySpinner.setSelection(0);
+    }
+
+    private void resetCategorySpinner() {
+        categoryAdapter.clear();
+        categorySelection = null;
+        categoryAdapter.add(getString(R.string.filter_spinner_default_category));
+        categorySpinner.setSelection(0);
     }
 
     @Override
@@ -236,41 +253,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    private void updateState(int stateChanged) {
-        if (state != stateChanged) {
-            state = stateChanged;
-            updateRecordDisplay();
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.button_clear_filter:
+                yearSpinner.setSelection(0);
+                yearSelection = -1;
+                resetMonthSpinner();
+                resetDaySpinner();
+
+                inoutSpinner.setSelection(0);
+                inoutSelection = -1;
+                resetCategorySpinner();
+
+                updateRecordDisplay();
+                break;
+            case R.id.button_filter_set:
+                updateRecordDisplay();
+                break;
         }
     }
-
-//    private void onDateSelectionChanged() {
-//        if (dateSelection != null) {
-//            String dateFormatStr = "yyyy-MM-dd";
-//            SimpleDateFormat sdf = new SimpleDateFormat(dateFormatStr);
-//            dateTextview.setText(sdf.format(dateSelection.getTime()));
-//        } else {
-//            dateTextview.setText(getResources().getString(R.string.homepage_date_default));
-//        }
-//        updateRecordDisplay();
-//    }
 
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String sortOrder = MoneyRecordEntry.COLUMN_DATE + " DESC";
         Uri uri;
-        if (dateSelection == null) {
-            if (state == 2) {
-                uri = MoneyRecordEntry.CONTENT_URI;
-            } else {
-                uri = MoneyRecordEntry.buildMoneyRecordInout(state);
-            }
+        String inoutStr = inoutSelection == -1 ? getString(R.string.uri_all) :
+                inoutSelection == 1 ? getString(R.string.uri_inout_income) : getString(R.string.uri_inout_spend);
+        String categoryStr = categorySelection == null ? getString(R.string.uri_all) : categorySelection;
+        if (yearSelection == -1) {
+            uri = MoneyRecordEntry.buildMoneyRecordInoutAndCategory(inoutStr, categoryStr);
         } else {
-            if (state == 2) {
-                uri = MoneyRecordEntry.buildMoneyRecordDate(dateSelection);
-            } else {
-                uri = MoneyRecordEntry.buildMoneyRecordInoutAndDate(state, dateSelection);
-            }
+            uri = MoneyRecordEntry.buildMoneyRecordDate(
+                    inoutStr, categoryStr, yearSelection, monthSelection, daySelection);
         }
         return new CursorLoader(this, uri, RECORD_COLUMNS, null, null, sortOrder);
     }
@@ -323,15 +339,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();  //TODO: Don't go back to edit/add page
-        }
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -355,24 +362,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return super.onOptionsItemSelected(item);
     }
 
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_all) {
-            updateState(2);
-        } else if (id == R.id.nav_income) {
-            updateState(1);
-        } else if (id == R.id.nav_spent) {
-            updateState(0);
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
+//    @Override
+//    public void onBackPressed() {
+//        // TODO: Don't go back to edit or add activity
+//        super.onBackPressed();
+//    }
 }
-

@@ -1,19 +1,28 @@
 <resources>
     <string name="app_name">Money Record</string>
 
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="button_clear_filter">Clear Filter</string>
+    <string name="button_filter_set">GO</string>
 
-    <string name="nav_all">All</string>
-    <string name="nav_income">Income</string>
-    <string name="nav_spent">Spent</string>
+    <string name="filter_spinner_default_year">Year</string>
+    <string name="filter_spinner_default_month">Month</string>
+    <string name="filter_spinner_default_day">Day</string>
+    <string name="filter_spinner_default_inout">Income/Spent</string>  <!-- change with inout_spinner array spontaneously -->
+    <string name="filter_spinner_default_category">All Categories</string>
 
-    <string name="action_ok">OK</string>
+    <string-array name="inout_spinner">
+        <item>Income/Spent</item> <!-- change with filter_spinner_inout_default array spontaneously -->
+        <item>Income</item>
+        <item>Spent</item>
+    </string-array>
+
+    <string name="uri_all">all</string>
+    <string name="uri_inout_income">income</string>
+    <string name="uri_inout_spend">spend</string>
+
     <string name="action_settings">Settings</string>
 
-    <string name="homepage_date_default">Select date</string>
-    <string name="homepage_all_dates">All dates</string>
-
+    <!-- ContextMenu -->
     <string name="item_edit">Edit</string>
     <string name="item_delete">Delete</string>
 
@@ -37,6 +46,13 @@
     <string name="additem_radio_text_income">Income</string>
     <string name="additem_radio_text_spend">Spend</string>
     <string name="title_activity_add_item">Add Item</string>
+
+    <string name="amount_hint">Amount: 0.00</string>
+    <string name="note_hint">Note (Optional)</string>
+
+    <string name="empty_amount_warning">Amount necessary.</string>
+
+    <string name="action_ok">OK</string>
 
     <!-- &: &amp; -->
 
