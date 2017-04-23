@@ -18,34 +18,26 @@
         android:gravity="center"
         android:minHeight="?android:attr/listPreferredItemHeight">
 
-        <TextView
-            android:id="@+id/date_display"
+        <Spinner
+            android:id="@+id/year_spinner"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="4"
-            android:gravity="center"
-            android:textSize="20sp"
-            android:text="@string/homepage_date_default" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
 
-        <TextView
-            android:id="@+id/all_dates"
+        <Spinner
+            android:id="@+id/month_spinner"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:text="@string/homepage_all_dates" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
 
-        <TextView
-            android:id="@+id/total_textview"
+        <Spinner
+            android:id="@+id/day_spinner"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="5"
-            android:gravity="center"
-            android:textSize="20sp" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
 
     </LinearLayout>
+
 
     <ListView
         android:id="@+id/record_display_listview"

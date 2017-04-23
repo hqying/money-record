@@ -1,6 +1,5 @@
 package com.wordpress.jlvivit.moneyrecord;
 
-import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -20,18 +19,46 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.DatePicker;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.wordpress.jlvivit.moneyrecord.data.MoneyRecordContract.MoneyRecordEntry;
 
-import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements
-        NavigationView.OnNavigationItemSelectedListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,
+        LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemSelectedListener {
+
+    private RecordAdapter recordAdapter;
+    private ListView recordDisplayListview;
+    private TextView totalTextview;
+    private TextView allDatesTextview;
+    private Calendar calendar;
+    private Spinner yearSpinner;
+    private Spinner monthSpinner;
+    private Spinner daySpinner;
+
+    private ArrayAdapter<String> yearAdapter;
+    private ArrayAdapter<String> monthAdapter;
+    private ArrayAdapter<String> dayAdapter;
+
+    private int state;  // income: 1; spent: 0; all: null
+    private Date dateSelection;
+    private int yearSelection;
+    private int monthSelection;
+    private int daySelection;
+
+
+    private static final int RECORD_LOADER = 0;
+
+    private static final String[] RECORD_COLUMNS = {
+            MoneyRecordEntry.TABLE_NAME + "." + MoneyRecordEntry._ID, MoneyRecordEntry.COLUMN_INOUT,
+            MoneyRecordEntry.COLUMN_DATE, MoneyRecordEntry.COLUMN_CATEGORY,
+            MoneyRecordEntry.COLUMN_AMOUNT, MoneyRecordEntry.COLUMN_NOTE};
 
     static final int COL_MONEY_RECORD_ID = 0;
     static final int COL_MONEY_RECORD_INOUT = 1;
@@ -39,20 +66,6 @@ public class MainActivity extends AppCompatActivity implements
     static final int COL_MONEY_RECORD_CATEGORY = 3;
     static final int COL_MONEY_RECORD_AMOUNT = 4;
     static final int COL_MONEY_RECORD_NOTE = 5;
-    private static final int RECORD_LOADER = 0;
-    private static final String[] RECORD_COLUMNS = {
-            MoneyRecordEntry.TABLE_NAME + "." + MoneyRecordEntry._ID, MoneyRecordEntry.COLUMN_INOUT,
-            MoneyRecordEntry.COLUMN_DATE, MoneyRecordEntry.COLUMN_CATEGORY,
-            MoneyRecordEntry.COLUMN_AMOUNT, MoneyRecordEntry.COLUMN_NOTE};
-    private RecordAdapter recordAdapter;
-    private ListView recordDisplayListview;
-    private TextView dateTextview;
-    private TextView totalTextview;
-    private TextView allDatesTextview;
-    private Calendar calendar;
-    private DatePickerDialog.OnDateSetListener dateSetListener;
-    private int state;  // income: 1; spent: 0; all: null
-    private Date dateSelection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements
 
         state = 2;
         dateSelection = null;
+        yearSelection = monthSelection = daySelection = -1;
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -113,35 +127,35 @@ public class MainActivity extends AppCompatActivity implements
         navigationView.setNavigationItemSelectedListener(this);
 
         calendar = Calendar.getInstance();
-        dateSetListener = new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                calendar.set(year, month, dayOfMonth);
-                dateSelection = calendar.getTime();
-                updateOnDateSelectionChanged();
-            }
-        };
-        dateTextview = (TextView) findViewById(R.id.date_display);
-        dateTextview.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DatePickerDialog datePickerDialog = new DatePickerDialog(
-                        MainActivity.this, dateSetListener, calendar.get(Calendar.YEAR),
-                        calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
-                datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
-                datePickerDialog.show();
-            }
-        });
 
-//        totalTextview = (TextView) findViewById(R.id.total_textview);
-        allDatesTextview = (TextView) findViewById(R.id.all_dates);
-        allDatesTextview.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dateSelection = null;
-                updateOnDateSelectionChanged();
-            }
-        });
+        yearSpinner = (Spinner) findViewById(R.id.year_spinner);
+        monthSpinner = (Spinner) findViewById(R.id.month_spinner);
+        daySpinner = (Spinner) findViewById(R.id.day_spinner);
+
+        yearAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        String[] yearRange = new String[calendar.get(Calendar.YEAR) - 2016 + 2];
+        yearRange[0] = "Year";
+        for (int i = 2016, k = 1; i <= calendar.get(Calendar.YEAR); i++, k++) {
+            yearRange[k] = Integer.toString(i);
+        }
+        yearAdapter.addAll(yearRange);
+        yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        yearSpinner.setAdapter(yearAdapter);
+
+        monthAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        monthAdapter.add("Month");
+        monthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        monthSpinner.setAdapter(monthAdapter);
+
+
+        dayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        dayAdapter.add("Day");
+        dayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        daySpinner.setAdapter(dayAdapter);
+
+        yearSpinner.setOnItemSelectedListener(this);
+        monthSpinner.setOnItemSelectedListener(this);
+        daySpinner.setOnItemSelectedListener(this);
 
         recordDisplayListview = (ListView) findViewById(R.id.record_display_listview);
         registerForContextMenu(recordDisplayListview);
@@ -151,6 +165,77 @@ public class MainActivity extends AppCompatActivity implements
         updateRecordDisplay();
     }
 
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String selected = (String) parent.getSelectedItem();
+        switch (parent.getId()) {
+            case R.id.year_spinner:
+                if (!selected.equals("Year")) {
+                    yearSelection = Integer.parseInt(selected);
+                    int maxMonth =  ((int) calendar.get(Calendar.YEAR) == yearSelection) ?
+                            calendar.get(Calendar.MONTH) + 1 : 12;
+
+                    String[] monthRange = new String[maxMonth + 1];
+                    monthRange[0] = "Month";
+                    for (int i = 1; i <= maxMonth; i++) {
+                        monthRange[i] = Integer.toString(i);
+                    }
+                    monthAdapter.clear();
+                    dayAdapter.clear();
+                    monthSelection = -1;
+                    daySelection = -1;
+                    monthAdapter.addAll(monthRange);
+                    dayAdapter.add("Day");
+                    monthSpinner.setSelection(0);
+                    daySpinner.setSelection(0);
+                }
+                break;
+            case R.id.month_spinner:
+                if (!selected.equals("Month")) {
+                    monthSelection = Integer.parseInt(selected) - 1;
+                    Integer[] days31 = new Integer[] {1, 3, 5, 7, 8, 10, 12};
+                    Integer[] days30 = new Integer[] {4, 6, 9, 11};
+                    int maxDay;
+                    if (yearSelection == calendar.get(Calendar.YEAR) &&
+                            monthSelection == (int) calendar.get(Calendar.MONTH)) {
+                        maxDay = calendar.get(Calendar.DAY_OF_MONTH);
+                    } else {
+                        if (Arrays.asList(days31).contains(monthSelection + 1)) {
+                            maxDay = 31;
+                        } else if (Arrays.asList(days30).contains(monthSelection + 1)) {
+                            maxDay = 30;
+                        } else if (monthSelection + 1 == 2) {
+                            maxDay = yearSelection % 4 == 0 ? 29 : 28;
+                        } else {
+                            throw new UnsupportedOperationException("Wrong month selection??!!??");
+                        }
+                    }
+                    String[] dayRange = new String[maxDay + 1];
+                    dayRange[0] = "Day";
+                    for (int i = 1; i <= maxDay; i++) {
+                        dayRange[i] = Integer.toString(i);
+                    }
+                    dayAdapter.clear();
+                    daySelection = -1;
+                    dayAdapter.addAll(dayRange);
+                    daySpinner.setSelection(0);
+                }
+                break;
+            case R.id.day_spinner:
+                if (!selected.equals("Day")) {
+                    daySelection = Integer.parseInt(selected);
+                }
+                break;
+            default:
+                // TODO
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
+
     private void updateState(int stateChanged) {
         if (state != stateChanged) {
             state = stateChanged;
@@ -158,16 +243,16 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void updateOnDateSelectionChanged() {
-        if (dateSelection != null) {
-            String dateFormatStr = "yyyy-MM-dd";
-            SimpleDateFormat sdf = new SimpleDateFormat(dateFormatStr);
-            dateTextview.setText(sdf.format(dateSelection.getTime()));
-        } else {
-            dateTextview.setText(getResources().getString(R.string.homepage_date_default));
-        }
-        updateRecordDisplay();
-    }
+//    private void onDateSelectionChanged() {
+//        if (dateSelection != null) {
+//            String dateFormatStr = "yyyy-MM-dd";
+//            SimpleDateFormat sdf = new SimpleDateFormat(dateFormatStr);
+//            dateTextview.setText(sdf.format(dateSelection.getTime()));
+//        } else {
+//            dateTextview.setText(getResources().getString(R.string.homepage_date_default));
+//        }
+//        updateRecordDisplay();
+//    }
 
 
     @Override
@@ -202,68 +287,12 @@ public class MainActivity extends AppCompatActivity implements
         recordAdapter.swapCursor(null);
     }
 
-    /*
-     * updateRecordDisplay method for CursorAdapter
-     */
+
     private void updateRecordDisplay() {
         //TODO
         getSupportLoaderManager().restartLoader(RECORD_LOADER, null, this);
     }
 
-    /*
-     * updateRecordDisplay method for ArrayAdapter<String>
-     */
-//    private void updateRecordDisplay() {
-//        Cursor cursor;
-//        recordAdapter.clear();
-//
-//        Uri uri;
-//        if(dateSelection == null) {
-//            if (state == 2) {
-//                uri = MoneyRecordEntry.CONTENT_URI;
-//            } else {
-//                uri = MoneyRecordEntry.buildMoneyRecordInout(state);
-//            }
-//        } else {
-//            if (state == 2) {
-//                uri = MoneyRecordEntry.buildMoneyRecordDate(dateSelection);
-//            } else {
-//                uri = MoneyRecordEntry.buildMoneyRecordInoutAndDate(state, dateSelection);
-//            }
-//        }
-//
-//        cursor = getContentResolver().query(uri, RECORD_COLUMNS, null, null, "DATE DESC");
-//
-//        double total = 0;
-//
-//        if (cursor == null) {
-//            return;
-//        }
-//        if (cursor.moveToFirst()) {
-//            do {
-//                int _id = cursor.getInt(COL_MONEY_RECORD_ID);
-//                int income = cursor.getInt(COL_MONEY_RECORD_INOUT);
-//                String inoutStr = income == 1 ? "Income:" : "Spent:";
-//                String dateStr = cursor.getString(COL_MONEY_RECORD_DATE);
-//                String category = cursor.getString(COL_MONEY_RECORD_CATEGORY);
-//                double amount = cursor.getDouble(COL_MONEY_RECORD_AMOUNT);
-//                total += income == 1 ? amount : -amount;
-//                String note = cursor.getString(COL_MONEY_RECORD_NOTE);
-//                String additemInfo = Integer.toString(_id) + " " + inoutStr + " " + dateStr + " " +
-//                        category + " " + String.format("%.2f", amount) + " " + note;
-//                Log.v("see id", additemInfo);
-//                recordAdapter.add(additemInfo);
-//            } while (cursor.moveToNext());
-//        }
-//        cursor.close();
-//
-//        totalTextview.setText(String.format("%.2f", total));
-//    }
-
-//    private void deleteRecord() {
-//        getContentResolver().delete(, null, null);
-//        updateRecordDisplay();
-//    }
 
 
     @Override
@@ -286,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements
                 return true;
             case R.id.item_delete:
                 getContentResolver().delete(MoneyRecordEntry.CONTENT_URI,
-                        MoneyRecordEntry._ID + " = ?", new String[]{Integer.toString(itemId)});
+                        MoneyRecordEntry._ID + " = ?", new String[] {Integer.toString(itemId)});
                 updateRecordDisplay();
                 return true;
             default:
@@ -346,3 +375,4 @@ public class MainActivity extends AppCompatActivity implements
         return true;
     }
 }
+
