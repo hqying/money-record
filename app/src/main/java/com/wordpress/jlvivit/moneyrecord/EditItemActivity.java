@@ -34,6 +34,7 @@ public class EditItemActivity extends AddItemActivity {  // TODO: okay or not so
                 Date date = (new SimpleDateFormat("yyyy-MM-dd")).parse(dateStr);
                 calendar.setTime(date);
             } catch (ParseException e) {
+                e.printStackTrace();
             }
             //dateView.setText(cursor.getString(MainActivity.COL_MONEY_RECORD_DATE));
             updateLabel();
@@ -51,9 +52,7 @@ public class EditItemActivity extends AddItemActivity {  // TODO: okay or not so
             updateItemInDb();
             return true;
         }
-        else {  //TODO: a bit strange??
-            return super.onOptionsItemSelected(item);
-        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void updateItemInDb() {
@@ -61,7 +60,7 @@ public class EditItemActivity extends AddItemActivity {  // TODO: okay or not so
         if (cv != null) {
             getContentResolver().update(MoneyRecordEntry.CONTENT_URI, cv,
                     MoneyRecordEntry.TABLE_NAME + "._ID = ?", new String[]{Integer.toString(itemId)});
-            startActivity(new Intent(this, MainActivity.class));
+            finish();
         }
 
     }

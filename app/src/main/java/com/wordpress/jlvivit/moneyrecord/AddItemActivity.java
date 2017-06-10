@@ -2,7 +2,6 @@ package com.wordpress.jlvivit.moneyrecord;
 
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.v7.app.AppCompatActivity;
@@ -136,7 +135,7 @@ public class AddItemActivity extends AppCompatActivity {
         ContentValues cv = createContentValues();
         if (cv != null) {
             getContentResolver().insert(MoneyRecordEntry.CONTENT_URI, cv);
-            startActivity(new Intent(this, MainActivity.class));
+            finish();
         }
     }
 }

@@ -3,6 +3,7 @@ package com.wordpress.jlvivit.moneyrecord;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
@@ -19,9 +20,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.wordpress.jlvivit.moneyrecord.data.MoneyRecordContract.MoneyRecordEntry;
 
+import java.io.File;
 import java.util.Calendar;
 
 import static java.lang.Integer.parseInt;
@@ -48,8 +51,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private int yearSelection;
     private int monthSelection;
     private int daySelection;
-
-
 
     private static final int RECORD_LOADER = 0;
 
@@ -222,8 +223,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             case R.id.filter_category_spinner:
                 categorySelection = selected.equals(
                         getString(R.string.filter_spinner_default_category)) ? null : selected;
-            default:
-                // TODO
         }
     }
 
@@ -250,7 +249,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
-
     }
 
     @Override
@@ -268,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
                 updateRecordDisplay();
                 break;
+
             case R.id.button_filter_set:
                 updateRecordDisplay();
                 break;
@@ -349,20 +348,42 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_export:
+                new ExportFileTask().execute();
+                return true;
+            case R.id.action_settings:
+                return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
-//    @Override
+    private class ExportFileTask extends AsyncTask<Void, Void, String> {
+        @Override
+        protected String doInBackground(Void... params) {
+            return Utility.exportDbFile(MainActivity.this);
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            String toastText = "File not saved";
+            if (s != null) {
+                File file = new File(s);
+                if (file.exists() && file.canRead()) {
+                    toastText = "Database file saved to " + s;
+                }
+            }
+            Toast.makeText(MainActivity.this, toastText, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        updateRecordDisplay();
+    }
+
+    //    @Override
 //    public void onBackPressed() {
 //        // TODO: Don't go back to edit or add activity
 //        super.onBackPressed();
