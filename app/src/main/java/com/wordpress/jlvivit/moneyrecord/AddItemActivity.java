@@ -56,6 +56,7 @@ public class AddItemActivity extends AppCompatActivity {
                 int spinnerStrRes = checkedId == R.id.additem_radio_income ?
                         R.array.category_spinner_income : R.array.category_spinner_spend;
                 categoryAdapter.addAll(getResources().getStringArray(spinnerStrRes));
+                categorySpinner.setSelection(0);
             }
         });
 
